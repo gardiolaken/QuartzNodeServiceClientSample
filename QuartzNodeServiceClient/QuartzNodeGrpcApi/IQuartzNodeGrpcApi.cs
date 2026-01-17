@@ -6,7 +6,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
     public interface IQuartzNodeGrpcApi
     {
         public int Attempt { get; set; }
-        public Task ConnectToControllerStream(CancellationToken cts);
+        public Task Register(CancellationToken cts);
 
     }
 }

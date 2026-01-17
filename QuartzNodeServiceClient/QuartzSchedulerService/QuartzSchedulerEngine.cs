@@ -1,8 +1,10 @@
 ﻿using Google.Protobuf.Collections;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcService;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Quartz;
+using Quartz.Impl.Matchers;
 using QuartzNodeService.Logger;
 using QuartzNodeService.Models;
 using QuartzNodeService.QuartzNodeGrpcApi;
@@ -80,6 +82,44 @@ namespace QuartzNodeService.QuartzSchedulerService
                 _logger.LogError($"Error getting job:{request.Job.JobName}. ErrorMessage:{ex.Message}");
             }
             
+			return response;
+		}
+		public async Task<QuartzClientResponse_Stream_PROTO> GetAllScheduledJobs(QuartzClientRequest_Stream_PROTO request)
+		{
+			var response = new QuartzClientResponse_Stream_PROTO();
+			response.IsError = false;
+
+			try
+			{
+				var jobKeys = await _scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
+				var scheduledJobs = new List<QuartzJob_PROTO>();
+
+				foreach (var jobKey in jobKeys)
+				{
+					var jobDetail = await _scheduler.GetJobDetail(jobKey);
+					var triggers = await _scheduler.GetTriggersOfJob(jobKey);
+					var trigger = triggers.FirstOrDefault();
+					var cron = string.Empty;
+					if (trigger is ICronTrigger cronTrigger)
+						cron = cronTrigger.CronExpressionString;			
+
+					scheduledJobs.Add(new QuartzJob_PROTO
+					{
+						JobKey = jobDetail?.Key.Name,
+						Schedule = cron,
+						LastRunDate = trigger?.GetPreviousFireTimeUtc()?.ToTimestamp()
+					});
+				}
+
+				response.Jobs.AddRange(scheduledJobs);
+			}
+			catch (Exception ex)
+			{
+				response.IsError = true;
+				response.ErrorMessage = ex.Message;
+				_logger.LogError($"Error getting job:{request.Job.JobName}. ErrorMessage:{ex.Message}");
+			}
+
 			return response;
 		}
 

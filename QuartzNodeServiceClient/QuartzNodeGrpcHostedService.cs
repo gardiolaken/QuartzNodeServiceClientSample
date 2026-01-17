@@ -60,7 +60,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
                     _logger.LogInformation("Supervisor starting ConnectToControllerStream (attempt {Attempt}).", _grpcApi.Attempt);
                     // Run the API connection. This method should observe the provided token and only complete on cancellation or unrecoverable error.
 
-                    await _grpcApi.ConnectToControllerStream(token);
+                    await _grpcApi.Register(token);
 
                     // If ConnectToControllerStream returned without throwing and cancellation wasn't requested,
                     // treat that as a clean exit and break the loop.

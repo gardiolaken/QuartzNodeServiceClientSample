@@ -5,10 +5,17 @@
         public string Key { get; }
         public string ServiceID { get; }
 
-        public ApiKeyProvider(string key, string serviceID)
+        public string ServerName { get; }
+
+        public string ServiceName { get; }
+
+        public ApiKeyProvider(string key, string serviceID, string serviceName, string serverName)
         {
             Key = key;
             ServiceID = serviceID;
-        }
+            ServiceName = serviceName;
+            ServerName = serverName;
+
+		}
     }
 }

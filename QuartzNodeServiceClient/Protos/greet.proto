@@ -9,7 +9,7 @@ package QuartzNode;
 service QuartzNode {
   // Sends a greeting
   rpc SayHello (HelloRequest_PROTO) returns (HelloReply_PROTO);
-  rpc GetScheduledJobs(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+  rpc GetAllScheduledJobs(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
   rpc GetJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
   rpc CreateJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
   rpc CreateRunNowJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
@@ -33,9 +33,15 @@ message NodeClientMessage {
   string request_id = 1;
   oneof payload {
     QuartzClientResponse_Stream_PROTO do_work_response = 2;
-    Error error = 3;
+	ServiceInfo ServiceInfo = 3;
+    Error error = 4;
   }
-  RequestType request_type = 4;
+  RequestType request_type = 5;
+}
+
+message ServiceInfo {
+	string name = 1;
+	string server = 2;
 }
 
 message Error {

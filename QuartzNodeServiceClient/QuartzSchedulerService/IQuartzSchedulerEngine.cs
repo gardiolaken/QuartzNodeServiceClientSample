@@ -8,8 +8,9 @@ namespace QuartzNodeService.QuartzSchedulerService
         Task<QuartzClientResponse_Stream_PROTO> DeleteJob(QuartzClientRequest_Stream_PROTO request);
 
         Task<QuartzClientResponse_Stream_PROTO> GetJob(QuartzClientRequest_Stream_PROTO request);
+		Task<QuartzClientResponse_Stream_PROTO> GetAllScheduledJobs(QuartzClientRequest_Stream_PROTO request);
 
-        Task<QuartzClientResponse_Stream_PROTO> CreateJob(QuartzClientRequest_Stream_PROTO request);
+		Task<QuartzClientResponse_Stream_PROTO> CreateJob(QuartzClientRequest_Stream_PROTO request);
 
         Task<QuartzClientResponse_Stream_PROTO> UpdateJob(QuartzClientRequest_Stream_PROTO request);
 

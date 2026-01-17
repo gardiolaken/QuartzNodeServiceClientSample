@@ -6,7 +6,7 @@ namespace QuartzNodeServiceClient
 {
 	public static class QuartzNodeServiceClientBuilder
 	{
-		public static void AddQuartzNodeServiceClient(WebApplicationBuilder webApplicationBuilder, IConfiguration config)
+		public static void AddQuartzNodeServiceClient(string serviceName, string serverName, WebApplicationBuilder webApplicationBuilder, IConfiguration config)
 		{
 
 			var serviceID = config.GetValue<string>("ServiceID");
@@ -18,7 +18,7 @@ namespace QuartzNodeServiceClient
 			if (string.IsNullOrEmpty(apiKey))
 				throw new Exception("API Key is not configured in appsettings.");
 
-			webApplicationBuilder.Services.AddSingleton(sp => new ApiKeyProvider(apiKey, serviceID));
+			webApplicationBuilder.Services.AddSingleton(sp => new ApiKeyProvider(apiKey, serviceID, serviceName, serverName));
 			webApplicationBuilder.Services.AddSingleton<GrpcChannelProvider>();
 			webApplicationBuilder.Services.AddSingleton<IQuartzSchedulerEngine, QuartzSchedulerEngine>();
 			webApplicationBuilder.Services.AddSingleton<IQuartzNodeGrpcApi, QuartzNodeGrpcApi>();

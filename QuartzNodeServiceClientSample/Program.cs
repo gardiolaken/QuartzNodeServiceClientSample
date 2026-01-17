@@ -60,7 +60,7 @@ public class Program
 
 		try
 		{
-			QuartzNodeServiceClientBuilder.AddQuartzNodeServiceClient(hostBuilder, config);
+			QuartzNodeServiceClientBuilder.AddQuartzNodeServiceClient("SampleService#1", "UAT-01", hostBuilder, config);
 			var app = hostBuilder.Build();
 
 			app.Run();

@@ -14,6 +14,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
         private readonly GrpcChannelProvider _channelProvider;
         private readonly string _apiKey;
         private readonly string _serviceID;
+        private readonly ApiKeyProvider _apiKeyProvider;
         private readonly ILogger<QuartzNodeGrpcApi> _logger;
         private readonly IQuartzSchedulerEngine _quartzSchedulerEngine;
         private readonly string _quartzControllerEndPoint;
@@ -28,7 +29,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
             _serviceID = apiKeyProvider.ServiceID;
             _logger = logger;
             _quartzSchedulerEngine = quartzSchedulerEngine;
-
+            _apiKeyProvider = apiKeyProvider;
             _quartzControllerEndPoint = configuration.GetConnectionString("QuartzController");
             if (string.IsNullOrEmpty(_quartzControllerEndPoint))
                 throw new Exception("quartzControllerEndPoint string is not configured in appsettings.");
@@ -53,7 +54,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
         /// Attempt a single connection to the controller. Exceptions bubble to the caller (hosted service),
         /// which is responsible for reconnect/backoff policy.
         /// </summary>
-        public async Task ConnectToControllerStream(CancellationToken ct)
+        public async Task Register(CancellationToken ct)
         {
             _logger.LogInformation("Connecting to controller at {Endpoint}", _quartzControllerEndPoint);
 
@@ -113,8 +114,13 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
             await stream.RequestStream.WriteAsync(new NodeClientMessage
             {
                 RequestId = "InitLogin",
-                RequestType = RequestType.Login
-            }, ct);
+                RequestType = RequestType.Login,
+                ServiceInfo = new ServiceInfo
+                {
+                    Name = _apiKeyProvider.ServiceName,
+                    Server = _apiKeyProvider.ServerName
+				}
+			}, ct);
 
             // Heartbeat loop - will exit when ct is canceled or if RequestStream.WriteAsync throws
             while (!ct.IsCancellationRequested)
@@ -141,7 +147,9 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
                     return await _quartzSchedulerEngine.CreateRunNowJob(doWork);
                 case JobAction.GetJob:
                     return await _quartzSchedulerEngine.GetJob(doWork);
-                case JobAction.UpdateJob:
+				case JobAction.GetScheduledJobs:
+					return await _quartzSchedulerEngine.GetAllScheduledJobs(doWork);
+				case JobAction.UpdateJob:
                     return await _quartzSchedulerEngine.UpdateJob(doWork);
                 case JobAction.DeleteJob:
                     return await _quartzSchedulerEngine.DeleteJob(doWork);
