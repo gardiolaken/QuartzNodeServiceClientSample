@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="QuartzNodeServiceClient/QuartzNodeServiceClient.csproj" />
+  <Project Path="QuartzNodeServiceClientSample/QuartzNodeServiceClientSample.csproj" />
+  <Project Path="SampleJob/SampleJob.csproj" />
+</Solution>

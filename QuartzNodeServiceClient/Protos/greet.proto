@@ -1,0 +1,134 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "GrpcService";
+
+package QuartzNode;
+
+// The greeting service definition.
+service QuartzNode {
+  // Sends a greeting
+  rpc SayHello (HelloRequest_PROTO) returns (HelloReply_PROTO);
+  rpc GetScheduledJobs(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+  rpc GetJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+  rpc CreateJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+  rpc CreateRunNowJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+  rpc UpdateJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+  rpc DeleteJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
+
+  rpc SayHelloStream (stream HelloRequest_Stream_PROTO) returns (stream HelloReply_Stream_PROTO);
+  rpc QuartzClientStreamBridge (stream NodeClientMessage) returns (stream ServerMessage);
+
+}
+
+message ServerMessage {
+  string request_id = 1;
+  oneof payload {
+	    QuartzClientRequest_Stream_PROTO do_work = 2;
+		bool ack = 3;
+  }
+}
+
+message NodeClientMessage {
+  string request_id = 1;
+  oneof payload {
+    QuartzClientResponse_Stream_PROTO do_work_response = 2;
+    Error error = 3;
+  }
+  RequestType request_type = 4;
+}
+
+message Error {
+	string code = 1;
+	string message = 2;
+}
+
+message QuartzClientRequest_Stream_PROTO {
+	QuartzJob_PROTO job = 1;
+	JobAction action = 2;
+}
+
+enum RequestType {
+  login = 0;
+  DoWorkResponse = 1;
+  heartbeat = 2;
+  shutdown = 3;
+}
+
+enum JobAction {
+  JOB_ACTION_UNSPECIFIED = 0;
+  GET_SCHEDULED_JOBS = 1;
+  GET_JOB = 2;
+  CREATE_JOB = 3;
+  CREATE_RUN_NOW_JOB = 4;
+  UPDATE_JOB = 5;
+  DELETE_JOB = 6;
+}
+
+message QuartzClientResponse_Stream_PROTO {
+	QuartzJob_PROTO job = 1;
+	repeated QuartzJob_PROTO jobs = 2;
+	bool is_error = 3;
+	string error_message = 4;
+}
+
+// The request message containing the user's name.
+message HelloRequest_PROTO {
+  string name = 1;
+}
+
+// The response message containing the greetings.
+message HelloReply_PROTO {
+  string message = 1;
+}
+
+// The request message containing the user's name.
+message HelloRequest_Stream_PROTO {
+  string message = 1;
+}
+
+// The response message containing the greetings.
+message HelloReply_Stream_PROTO {
+  string message = 1;
+}
+
+
+message QuartzJobResponse_PROTO {
+  QuartzJob_PROTO job = 1;
+}
+
+message QuartzCRUDRequest_PROTO {
+	string serviceId = 1;  
+	QuartzJob_PROTO job = 2;
+}
+
+message QuartzCRUDResponse_PROTO {
+  QuartzJob_PROTO job = 1;
+  repeated QuartzJob_PROTO jobs = 2;
+  bool is_error = 3;
+  string error_message = 4;
+}
+
+message QuartzJobsResponse_PROTO {
+  repeated QuartzJob_PROTO jobs = 1;
+}
+
+message QuartzJob_PROTO {
+  string job_key = 1;
+  string job_name = 2;
+  string server_name = 3;
+  string assembly_path = 4;
+  string schedule = 5;
+  string class_name = 6;
+  string description = 7;
+ 
+
+  google.protobuf.Timestamp created_at_date = 8;
+  google.protobuf.Timestamp last_updated_date = 9;
+  google.protobuf.Timestamp last_run_date = 10;
+
+  string created_by = 11;
+  string config_name = 12;
+  string updated_by = 13;
+  bool is_enabled = 14;
+}
