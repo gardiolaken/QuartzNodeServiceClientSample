@@ -1,20 +1,14 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Quartz;
 using Quartz.Logging;
-using QuartzNodeService;
-using QuartzNodeService.QuartzNodeGrpcApi;
-using QuartzNodeService.QuartzSchedulerService;
-using QuartzNodeService.Services;
 using QuartzNodeServiceClient;
 using SampleJob;
 using Serilog;
-using System.Security.Cryptography;
-using static Quartz.Logging.OperationName;
+using Serilog.Core;
+using Serilog.Events;
 
 public class Program
 {
@@ -23,8 +17,6 @@ public class Program
 	{
 		var config = new ConfigurationBuilder()
 			.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-			.AddJsonFile("serilogsettings.json", optional: false, reloadOnChange: true)
-			.AddJsonFile("Loadersettings.json", optional: false, reloadOnChange: true)
 			.Build();
 
 		LogProvider.IsDisabled = !config.GetValue<bool?>("Quartz:EnableDebugMode") ?? true;
@@ -34,12 +26,15 @@ public class Program
 			.WriteTo.Console()
 			.CreateLogger();
 
+		var logLevelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
 		var hostBuilder = WebApplication.CreateBuilder(args);
 		hostBuilder.Host
 			 .UseWindowsService()
 			 .UseSerilog((context, loggerConfiguration) => loggerConfiguration
+				 .MinimumLevel.ControlledBy(logLevelSwitch)
 				 .ReadFrom.Configuration(config)
-				 .Enrich.FromLogContext())
+				 .Enrich.FromLogContext()
+				 .WriteTo.Console()				 )
 			 .ConfigureServices((hostContext, services) =>
 			 {
 				 var config = hostContext.Configuration;
@@ -47,18 +42,6 @@ public class Program
 				 var cron = config.GetValue<string>("Quartz:JobSchedule");
 				 if (string.IsNullOrEmpty(cron))
 					 throw new Exception($"Invalid cron schedule provided for QC.");
-
-				 var loaderSchedule = config.GetValue<string>("Quartz:LoaderSchedule");
-				 if (string.IsNullOrEmpty(loaderSchedule))
-					 throw new Exception($"Invalid cron schedule provided for Loader.");
-
-				 var validationSchedule = config.GetValue<string>("Quartz:MergeValidationSchedule");
-				 if (string.IsNullOrEmpty(validationSchedule))
-					 throw new Exception($"Invalid cron schedule provided for MergeValidation.");
-
-				 var reporterSchedule = config.GetValue<string>("Quartz:ReporterSchedule");
-				 if (string.IsNullOrEmpty(reporterSchedule))
-					 throw new Exception($"Invalid cron schedule provided for ReporterSchedule.");
 
 				 services.AddSingleton(config);
 				 services.AddQuartz(x =>

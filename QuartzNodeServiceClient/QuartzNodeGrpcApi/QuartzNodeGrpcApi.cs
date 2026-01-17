@@ -102,9 +102,9 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
                     _logger.LogInformation("Response reader canceled by token.");
                     throw;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    _logger.LogWarning(ex, "Response reader faulted; will bubble to supervisor.");
+                    _logger.LogWarning("Response reader faulted; will bubble to supervisor.");
                     throw;
                 }
             }, CancellationToken.None);

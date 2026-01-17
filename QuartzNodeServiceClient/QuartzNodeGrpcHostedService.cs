@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Quartz.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,7 +52,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
             var rnd = new Random();
             _grpcApi.Attempt = 0;
 
-            while (!token.IsCancellationRequested)
+		    while (!token.IsCancellationRequested)
             {
                 try
                 {
@@ -76,8 +77,8 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "ConnectToControllerStream faulted. Supervisor will attempt restart.");
-
+                    _logger.LogWarning("ConnectToControllerStream faulted. Supervisor will attempt restart. Turn on Debug Level Log for more info");
+                    _logger.LogDebug($"ConnectToControllerStream faulted {ex}");
                     // track rapid failures
                     var now = DateTime.UtcNow;
                     if (_recentFailureCount == 0)
