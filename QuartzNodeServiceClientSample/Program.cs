@@ -26,12 +26,10 @@ public class Program
 			.WriteTo.Console()
 			.CreateLogger();
 
-		var logLevelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
 		var hostBuilder = WebApplication.CreateBuilder(args);
 		hostBuilder.Host
 			 .UseWindowsService()
 			 .UseSerilog((context, loggerConfiguration) => loggerConfiguration
-				 .MinimumLevel.ControlledBy(logLevelSwitch)
 				 .ReadFrom.Configuration(config)
 				 .Enrich.FromLogContext()
 				 .WriteTo.Console()				 )
