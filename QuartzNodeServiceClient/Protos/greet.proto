@@ -15,7 +15,9 @@ service QuartzNode {
   rpc CreateRunNowJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
   rpc UpdateJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
   rpc DeleteJob(QuartzCRUDRequest_PROTO) returns (QuartzCRUDResponse_PROTO);
-
+  
+  rpc GetConnectedNodes(ServiceInfoRequest) returns (ServiceInfoResponse);
+  rpc GetNode(ServiceInfoRequest) returns (ServiceInfoResponse);
   rpc SayHelloStream (stream HelloRequest_Stream_PROTO) returns (stream HelloReply_Stream_PROTO);
   rpc QuartzClientStreamBridge (stream NodeClientMessage) returns (stream ServerMessage);
 
@@ -26,7 +28,26 @@ message ServerMessage {
   oneof payload {
 	    QuartzClientRequest_Stream_PROTO do_work = 2;
 		bool ack = 3;
+		Error error = 4;
   }
+}
+
+message ServiceInfoResponse{
+	ServiceInfo service = 1;
+	repeated ServiceInfo services = 2;
+	bool error = 3;	
+	string error_message = 4;
+}
+
+message ServiceInfoRequest {
+	string id = 1;
+}
+
+message ServiceInfo {
+	string id = 1;
+	string name = 2;
+	string server = 3;
+	google.protobuf.Timestamp last_heart_beat = 4;
 }
 
 message NodeClientMessage {
@@ -37,11 +58,6 @@ message NodeClientMessage {
     Error error = 4;
   }
   RequestType request_type = 5;
-}
-
-message ServiceInfo {
-	string name = 1;
-	string server = 2;
 }
 
 message Error {
@@ -137,4 +153,6 @@ message QuartzJob_PROTO {
   string config_name = 12;
   string updated_by = 13;
   bool is_enabled = 14;
+
+  ServiceInfo service_info = 15;
 }
