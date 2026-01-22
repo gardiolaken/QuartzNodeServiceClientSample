@@ -45,12 +45,19 @@ public class Program
 				 services.AddQuartz(x =>
 				 {
 					 x.AddTrigger(trigger => trigger
-					 .ForJob("SampleJob")
-					 .WithIdentity("SampleJob")
+					 .ForJob("SampleJob#1")
+					 .WithIdentity("SampleJob#1")
 					 .WithCronSchedule(cron)
-					 .WithDescription($"Trigger created for SampleJob"));
-					 x.AddJob<FileImporter>(opts => opts.WithIdentity("SampleJob"));
-				 });
+					 .WithDescription($"Trigger created for SampleJob#1"));
+					 x.AddJob<FileImporter>(opts => opts.WithIdentity("SampleJob#1"));
+
+                     x.AddTrigger(trigger => trigger
+                     .ForJob("SampleJob#2")
+                     .WithIdentity("SampleJob#2")
+                     .WithCronSchedule(cron)
+                     .WithDescription($"Trigger created for SampleJob#2"));
+                     x.AddJob<FileImporter>(opts => opts.WithIdentity("SampleJob#2"));
+                 });
 
 				 services.AddQuartzHostedService(x => x.WaitForJobsToComplete = true);
 			 });
