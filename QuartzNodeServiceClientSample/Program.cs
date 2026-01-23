@@ -56,7 +56,7 @@ public class Program
                      .WithIdentity("SampleJob#2")
                      .WithCronSchedule(cron)
                      .WithDescription($"Trigger created for SampleJob#2"));
-                     x.AddJob<FileImporter>(opts => opts.WithIdentity("SampleJob#2"));
+                     x.AddJob<FileImporter2>(opts => opts.WithIdentity("SampleJob#2"));
                  });
 
 				 services.AddQuartzHostedService(x => x.WaitForJobsToComplete = true);

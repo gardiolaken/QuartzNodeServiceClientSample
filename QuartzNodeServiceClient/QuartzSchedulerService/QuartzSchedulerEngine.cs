@@ -193,8 +193,9 @@ namespace QuartzNodeService.QuartzSchedulerService
 				var triggerKey = new TriggerKey(job.JobKey);
 				var jobKey = GenerateJobKey(job.JobKey);
 
-				//var jobDetail = await _scheduler.GetJobDetail(jobKey);
-				var newTrigger = TriggerBuilder.Create()
+				var jobDetail = await _scheduler.GetJobDetail(jobKey);
+				
+                var newTrigger = TriggerBuilder.Create()
                         .WithIdentity(job.JobKey)
                         .ForJob(jobKey)
                         .WithCronSchedule(job.Schedule)
@@ -203,32 +204,6 @@ namespace QuartzNodeService.QuartzSchedulerService
                 var trigger = await _scheduler.GetTrigger(triggerKey);
                 // Reschedule the job with the new trigger
                 await _scheduler.RescheduleJob(triggerKey, newTrigger);
-
-    //            // lets delete job and any trigger if exist
-    //            //await _scheduler.DeleteJob(newJobKey);
-
-    //            // recreate job with updated details
-    //            var newJob = new QuartzJob
-				//{
-				//	Id = job.JobKey,
-				//	JobName = job.JobName,
-				//	AssemblyPath = job.AssemblyPath,
-				//	ClassName = job.ClassName,
-				//	ConfigName = job.ConfigName,
-				//	Schedule = job.Schedule,
-				//	Description = job.Description
-				//};
-
-
-
-				//IJobDetail newJobDetail = CreateJobDetail(newJob);
-				//ITrigger jobTrigger = CreateJobTrigger(newJob, newJobDetail);
-
-				//await _scheduler.ScheduleJob(newJobDetail, jobTrigger);
-				//_logger.LogInformation($"Job:{job.JobKey} Created and Scheduled.");
-
-				//response.IsError = false;
-				//_logger.LogInformation($"Job:{job.JobKey} Recreated.");
 			}
 			catch (Exception ex)
 			{
