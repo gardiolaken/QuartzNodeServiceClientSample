@@ -30,7 +30,7 @@ namespace QuartzNodeService.QuartzNodeGrpcApi
             _logger = logger;
             _quartzSchedulerEngine = quartzSchedulerEngine;
             _apiKeyProvider = apiKeyProvider;
-            _quartzControllerEndPoint = configuration.GetConnectionString("QuartzController");
+            _quartzControllerEndPoint = configuration.GetValue<string>("QuartzNodeService:QuartzController");
             if (string.IsNullOrEmpty(_quartzControllerEndPoint))
                 throw new Exception("quartzControllerEndPoint string is not configured in appsettings.");
 

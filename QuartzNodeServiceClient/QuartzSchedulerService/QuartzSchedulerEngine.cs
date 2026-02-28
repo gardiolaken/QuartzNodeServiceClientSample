@@ -17,10 +17,12 @@ namespace QuartzNodeService.QuartzSchedulerService
     {
 		private IScheduler _scheduler;
 		private ILogger _logger;
-        public QuartzSchedulerEngine(ILogger<QuartzSchedulerEngine> logger, ISchedulerFactory scheduler)
+		private readonly ApiKeyProvider _apiKeyProvider;
+        public QuartzSchedulerEngine(ILogger<QuartzSchedulerEngine> logger, ISchedulerFactory scheduler, ApiKeyProvider apiKeyProvider)
 		{
 			_logger = logger;
 			_scheduler = scheduler.GetScheduler().Result;
+            _apiKeyProvider = apiKeyProvider;
         }
 		public void RegisterScheduler(IScheduler scheduler)
 		{
@@ -63,17 +65,32 @@ namespace QuartzNodeService.QuartzSchedulerService
 
 			try
 			{
-                var jobDetail = await _scheduler.GetJobDetail(GenerateJobKey(request.Job.JobKey));
+				var jobKey = GenerateJobKey(request.Job.JobKey);
+                var jobDetail = await _scheduler.GetJobDetail(jobKey);
                 if (jobDetail == null)
                 {
                     response.Job = null;
                     return response;
                 }
 
-                response.Job = new QuartzJob_PROTO
-                {
-                    JobName = jobDetail.Key.Name,
-                };
+                var triggers = await _scheduler.GetTriggersOfJob(jobKey);
+                var trigger = triggers.FirstOrDefault();
+                var cron = string.Empty;
+                if (trigger is ICronTrigger cronTrigger)
+                    cron = cronTrigger.CronExpressionString;
+
+				response.Job = new QuartzJob_PROTO
+				{
+					JobKey = jobDetail?.Key.Name,
+					Schedule = cron,
+					LastRunDate = trigger?.GetPreviousFireTimeUtc()?.ToTimestamp(),
+					ServiceInfo = new ServiceInfo
+					{
+						Server = _apiKeyProvider.ServerName,
+						Id = _apiKeyProvider.ServiceID,
+						Name = _apiKeyProvider.ServiceName
+					}
+				};
             }
             catch (Exception ex)
             {
@@ -107,8 +124,14 @@ namespace QuartzNodeService.QuartzSchedulerService
 					{
 						JobKey = jobDetail?.Key.Name,
 						Schedule = cron,
-						LastRunDate = trigger?.GetPreviousFireTimeUtc()?.ToTimestamp()
-					});
+						LastRunDate = trigger?.GetPreviousFireTimeUtc()?.ToTimestamp(),
+                        ServiceInfo = new ServiceInfo
+                        {
+                            Server = _apiKeyProvider.ServerName,
+                            Id = _apiKeyProvider.ServiceID,
+                            Name = _apiKeyProvider.ServiceName
+                        }
+                    });
 				}
 
 				response.Jobs.AddRange(scheduledJobs);
@@ -167,32 +190,20 @@ namespace QuartzNodeService.QuartzSchedulerService
 
 			try
 			{
-				var triggerKey = new TriggerKey($"{job.JobKey}_Trigger");
-				var newJobKey = GenerateJobKey(job.JobKey);
+				var triggerKey = new TriggerKey(job.JobKey);
+				var jobKey = GenerateJobKey(job.JobKey);
 
-				// lets delete job and any trigger if exist
-				await _scheduler.DeleteJob(newJobKey);
+				var jobDetail = await _scheduler.GetJobDetail(jobKey);
+				
+                var newTrigger = TriggerBuilder.Create()
+                        .WithIdentity(job.JobKey)
+                        .ForJob(jobKey)
+                        .WithCronSchedule(job.Schedule)
+                        .Build();
 
-				// recreate job with updated details
-				var newJob = new QuartzJob
-				{
-					Id = job.JobKey,
-					JobName = job.JobName,
-					AssemblyPath = job.AssemblyPath,
-					ClassName = job.ClassName,
-					ConfigName = job.ConfigName,
-					Schedule = job.Schedule,
-					Description = job.Description
-				};
-
-				IJobDetail newJobDetail = CreateJobDetail(newJob);
-				ITrigger jobTrigger = CreateJobTrigger(newJob, newJobDetail);
-
-				await _scheduler.ScheduleJob(newJobDetail, jobTrigger);
-				_logger.LogInformation($"Job:{job.JobKey} Created and Scheduled.");
-
-				response.IsError = false;
-				_logger.LogInformation($"Job:{job.JobKey} Recreated.");
+                var trigger = await _scheduler.GetTrigger(triggerKey);
+                // Reschedule the job with the new trigger
+                await _scheduler.RescheduleJob(triggerKey, newTrigger);
 			}
 			catch (Exception ex)
 			{
@@ -309,7 +320,7 @@ namespace QuartzNodeService.QuartzSchedulerService
 
 		private JobKey GenerateJobKey(string jobKey)
 		{
-			return new JobKey(jobKey.ToLower());
+			return new JobKey(jobKey);
 		}		
 	}
 }
