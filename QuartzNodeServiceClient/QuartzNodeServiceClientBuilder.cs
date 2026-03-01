@@ -9,11 +9,11 @@ namespace QuartzNodeServiceClient
 {
 	public static class QuartzNodeServiceClientBuilder
 	{
-		public static void AddQuartzNodeServiceClient(string serviceName, string serverName, WebApplicationBuilder webApplicationBuilder, IConfiguration config)
+		public static void AddQuartzNodeServiceClient(string serviceName, string serverName, IHostBuilder applicationBuilder, IConfiguration config)
 		{
 
 			var serviceID = config.GetValue<string>("QuartzNodeService:ServiceID");
-			var apiKey = webApplicationBuilder.Configuration.GetValue<string>("QuartzNodeService:ApiKey");
+			var apiKey = config.GetValue<string>("QuartzNodeService:ApiKey");
 			if (string.IsNullOrEmpty(apiKey))
 				throw new Exception("API Key is not configured in appsettings.");
 
@@ -22,17 +22,23 @@ namespace QuartzNodeServiceClient
 			.Build();
 
             var logLevelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
-            webApplicationBuilder.Host.UseSerilog((context, loggerConfiguration) => loggerConfiguration
+
+						
+            applicationBuilder.UseSerilog((context, loggerConfiguration) => loggerConfiguration
                  .MinimumLevel.ControlledBy(logLevelSwitch)
                  .ReadFrom.Configuration(hotConfig)
 				 .Enrich.FromLogContext()
 				 .WriteTo.Console());
 
-            webApplicationBuilder.Services.AddSingleton(sp => new ApiKeyProvider(apiKey, serviceID, serviceName, serverName));
-			webApplicationBuilder.Services.AddSingleton<GrpcChannelProvider>();
-			webApplicationBuilder.Services.AddSingleton<IQuartzSchedulerEngine, QuartzSchedulerEngine>();
-			webApplicationBuilder.Services.AddSingleton<IQuartzNodeGrpcApi, QuartzNodeGrpcApi>();
-			webApplicationBuilder.Services.AddHostedService<QuartzNodeGrpcHostedService>();
+			applicationBuilder.ConfigureServices(services =>
+			{
+
+				services.AddSingleton(sp => new ApiKeyProvider(apiKey, serviceID, serviceName, serverName));
+				services.AddSingleton<GrpcChannelProvider>();
+				services.AddSingleton<IQuartzSchedulerEngine, QuartzSchedulerEngine>();
+				services.AddSingleton<IQuartzNodeGrpcApi, QuartzNodeGrpcApi>();
+				services.AddHostedService<QuartzNodeGrpcHostedService>();
+			});
 		}
 	}
 }

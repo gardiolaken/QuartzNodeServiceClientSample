@@ -26,8 +26,8 @@ public class Program
 			.WriteTo.Console()
 			.CreateLogger();
 
-		var hostBuilder = WebApplication.CreateBuilder(args);
-		hostBuilder.Host
+		var hostBuilder = Host.CreateDefaultBuilder(args);
+		hostBuilder
 			 .UseWindowsService()
 			 .UseSerilog((context, loggerConfiguration) => loggerConfiguration
 				 .ReadFrom.Configuration(config)
@@ -60,9 +60,7 @@ public class Program
                  });
 
 				 services.AddQuartzHostedService(x => x.WaitForJobsToComplete = true);
-			 });
-		hostBuilder.Services.AddSingleton(config);
-
+			 });		
 		try
 		{
 			QuartzNodeServiceClientBuilder.AddQuartzNodeServiceClient("SampleService#1", "UAT-01", hostBuilder, config);
